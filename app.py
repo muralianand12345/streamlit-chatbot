@@ -1,15 +1,11 @@
-import os
 import re
 import time
 import streamlit as st
 from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
 
 st.title("ChatBot")
 client = OpenAI(
-    base_url="https://api.groq.com/openai/v1", api_key=os.environ["OPENAI_API_KEY"]
+    base_url="https://api.groq.com/openai/v1", api_key=st.secrets["OpenAI_key"]
 )
 
 LLM_MODEL = "qwen/qwen3-32b"
