@@ -12,4 +12,4 @@ wheels/
 
 notebooks
 pyproject.toml
-poetry.lock
+uv.lock
