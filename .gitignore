@@ -11,3 +11,5 @@ wheels/
 .streamlit
 
 notebooks
+pyproject.toml
+poetry.lock
