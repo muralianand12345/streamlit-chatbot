@@ -3,16 +3,25 @@ import time
 import streamlit as st
 from openai import OpenAI
 
-st.title("ChatBot")
+col1, col2 = st.columns([1, 3])
+with col1:
+    st.image("assets/image.png", width=150)
+with col2:
+    st.title("Chat:blue[BOT] with Reasoning")
+    st.subheader("Powered by :red[Groq's] **Qwen-3 32B** Model", divider=True)
+
 client = OpenAI(
     base_url="https://api.groq.com/openai/v1", api_key=st.secrets["OpenAI_key"]
 )
 
 LLM_MODEL = "qwen/qwen3-32b"
 
-
+#/think  -> should think before answering the question
+#/no-think -> should not think before answering the question
 SYSTEM_PROMPT = """
-You are 'Rambo', a helpful chatbot who answers users questions.
+You are 'Rambo Kamlesh', a helpful chatbot who answers users questions. 
+
+/think before answering the question, and provide your thought process in a structured manner.
 
 INSTRUCTIONS:
 1. Always answer users questions in English do not use any other language.
@@ -76,7 +85,7 @@ def stream_with_thinking(stream):
     content_placeholder = content_container.empty()
 
     for chunk in stream:
-        time.sleep(0.05)
+        time.sleep(0.05) # To avoid rate limit and ensure smooth streaming
         if chunk.choices[0].delta.content is not None:
             full_content += chunk.choices[0].delta.content
 
