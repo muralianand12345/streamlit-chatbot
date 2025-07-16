@@ -1,7 +1,8 @@
 import re
 import time
+import openai
 import streamlit as st
-from openai import OpenAI
+from typing import List, Tuple
 
 col1, col2 = st.columns([1, 3])
 with col1:
@@ -10,23 +11,30 @@ with col2:
     st.title("Chat:blue[BOT] with Reasoning")
     st.subheader("Powered by :red[Groq's] **Qwen-3 32B** Model", divider=True)
 
-client = OpenAI(
-    base_url="https://api.groq.com/openai/v1", api_key=st.secrets["OpenAI_key"]
-)
-
 LLM_MODEL = "qwen/qwen3-32b"
+LLM_BASE_URL = "https://api.groq.com/openai/v1"
 
-#/think  -> should think before answering the question
-#/no-think -> should not think before answering the question
+client = openai.OpenAI(base_url=LLM_BASE_URL, api_key=st.secrets["OpenAI_key"])
+
 SYSTEM_PROMPT = """
 You are 'Rambo Kamlesh', a helpful chatbot who answers users questions. 
 
-/think before answering the question, and provide your thought process in a structured manner.
-
 INSTRUCTIONS:
 1. Always answer users questions in English do not use any other language.
-2. Use markdown formatting to make your answers more readable.
-3. Start the conversation with a friendly greeting and introduction.
+2. Your answers should be concise and to the point.
+3. Use markdown formatting to make your answers more readable.
+4. Start the conversation with a friendly greeting and introduction if needed.
+5. If you need more clarification, ask the user for more details or context.
+6. If you are unsure about something, let the user know that you are not sure.
+7. Use emojis if required to make the conversation more engaging.
+
+DO NOT:
+1. Use any offensive or inappropriate language.
+2. Provide any personal opinions or beliefs.
+3. Make any assumptions about the user or their questions.
+4. Provide any medical, legal, or financial advice.
+5. Provide any information that is not relevant to the user's question.
+6. Use any jargon or technical terms that the user may not understand.
 """
 
 if "openai_model" not in st.session_state:
@@ -39,8 +47,44 @@ if "messages" not in st.session_state:
         }
     ]
 
+def chat_commands(message: str) -> str:
+    if not message.startswith("/"):
+        return message
+    
+    COMMAND = {
+        "clear-chat": "Clear's the chat history.",
+        "new-chat": "Starts a new conversation.",
+        "help": "Provides a list of available commands.",
+    }
+    
+    command, *args = message[1:].split()
 
-def extract_thinking_and_content(text):
+    if command == "clear-chat":
+        st.session_state.messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            }
+        ]
+        st.rerun()
+        return "Chat history cleared."
+    elif command == "new-chat":
+        st.session_state.messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            }
+        ]
+        st.rerun()
+        return "New chat started."
+    elif command == "help":
+        help_text = "### Available commands:\n"
+        for cmd, desc in COMMAND.items():
+            help_text += f"- **/{cmd}**: {desc}\n"
+        return help_text.strip()
+
+
+def extract_thinking_and_content(text: str) -> Tuple[List[str], str, str, bool]:
     think_pattern = r"<think>(.*?)</think>"
     thinking_matches = re.findall(think_pattern, text, re.DOTALL)
     cleaned_text = re.sub(think_pattern, "", text, flags=re.DOTALL).strip()
@@ -58,7 +102,7 @@ def extract_thinking_and_content(text):
     return thinking_matches, current_thinking, cleaned_text, is_thinking
 
 
-def display_thinking(completed_thinking, current_thinking, is_thinking):
+def display_thinking(completed_thinking: List[str], current_thinking: str, is_thinking: bool) -> None:
     if completed_thinking or current_thinking or is_thinking:
         with st.expander("Thinking...", expanded=True):
             for i, think in enumerate(completed_thinking):
@@ -76,7 +120,7 @@ def display_thinking(completed_thinking, current_thinking, is_thinking):
                 st.markdown("*Thinking...*")
 
 
-def stream_with_thinking(stream):
+def stream_with_thinking(stream: openai.types.Completion) -> Tuple[str, List[str], str]:
     full_content = ""
     thinking_container = st.container()
     content_container = st.container()
@@ -85,7 +129,7 @@ def stream_with_thinking(stream):
     content_placeholder = content_container.empty()
 
     for chunk in stream:
-        time.sleep(0.05) # To avoid rate limit and ensure smooth streaming
+        time.sleep(0.05)  # To avoid rate limit and ensure smooth streaming
         if chunk.choices[0].delta.content is not None:
             full_content += chunk.choices[0].delta.content
 
@@ -99,7 +143,7 @@ def stream_with_thinking(stream):
             if cleaned_content and not is_thinking:
                 content_placeholder.markdown(cleaned_content)
 
-    final_completed, final_current, final_content, final_thinking = (
+    final_completed, _, final_content, _ = (
         extract_thinking_and_content(full_content)
     )
     thinking_placeholder.empty()
@@ -130,28 +174,40 @@ for message in st.session_state.messages:
                         st.divider()
         st.markdown(message["content"])
 
-if prompt := st.chat_input("What's on your mind?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
+    if prompt.startswith("/"):
+        command_response = chat_commands(prompt)
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-    with st.chat_message("assistant"):
-        stream = client.chat.completions.create(
-            model=st.session_state["openai_model"],
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
-        )
+        if command_response:
+            st.session_state.messages.append({"role": "assistant", "content": command_response})
+            with st.chat_message("assistant"):
+                st.markdown(command_response)
+    else:
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-        full_response, thinking_matches, cleaned_content = stream_with_thinking(stream)
+        with st.chat_message("assistant"):
+            stream = client.chat.completions.create(
+                model=st.session_state["openai_model"],
+                reasoning_effort="default",
+                messages=[
+                    {"role": m["role"], "content": m["content"]}
+                    for m in st.session_state.messages
+                ],
+                stream=True,
+            )
 
-        assistant_message = {
-            "role": "assistant",
-            "content": cleaned_content or full_response,
-        }
-        if thinking_matches:
-            assistant_message["thinking"] = thinking_matches
+            full_response, thinking_matches, cleaned_content = stream_with_thinking(stream)
 
-        st.session_state.messages.append(assistant_message)
+            assistant_message = {
+                "role": "assistant",
+                "content": cleaned_content or full_response,
+            }
+            if thinking_matches:
+                assistant_message["thinking"] = thinking_matches
+
+            st.session_state.messages.append(assistant_message)
