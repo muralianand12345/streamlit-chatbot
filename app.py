@@ -1,5 +1,4 @@
 import re
-import time
 import openai
 import streamlit as st
 from typing import List, Tuple
@@ -9,15 +8,15 @@ with col1:
     st.image("assets/image.png", width=150)
 with col2:
     st.title("Chat:blue[BOT] with Reasoning")
-    st.subheader("Powered by :red[Groq's] **Qwen-3 32B** Model", divider=True)
+    st.subheader("Powered by :red[Google's] **Gemini-2.5-Flash**", divider=True)
 
-LLM_MODEL = "qwen/qwen3-32b"
-LLM_BASE_URL = "https://api.groq.com/openai/v1"
+LLM_MODEL = "gemini-2.5-flash"
+LLM_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 client = openai.OpenAI(base_url=LLM_BASE_URL, api_key=st.secrets["OpenAI_key"])
 
 SYSTEM_PROMPT = """
-You are 'Rambo Kamlesh', a helpful chatbot who answers users questions. 
+You are 'Rambo Kamlesh', a helpful chatbot who answers users questions and assists them with their queries.
 
 INSTRUCTIONS:
 1. Always answer users questions in English do not use any other language.
@@ -27,14 +26,6 @@ INSTRUCTIONS:
 5. If you need more clarification, ask the user for more details or context.
 6. If you are unsure about something, let the user know that you are not sure.
 7. Use emojis if required to make the conversation more engaging.
-
-DO NOT:
-1. Use any offensive or inappropriate language.
-2. Provide any personal opinions or beliefs.
-3. Make any assumptions about the user or their questions.
-4. Provide any medical, legal, or financial advice.
-5. Provide any information that is not relevant to the user's question.
-6. Use any jargon or technical terms that the user may not understand.
 """
 
 if "openai_model" not in st.session_state:
@@ -85,17 +76,17 @@ def chat_commands(message: str) -> str:
 
 
 def extract_thinking_and_content(text: str) -> Tuple[List[str], str, str, bool]:
-    think_pattern = r"<think>(.*?)</think>"
+    think_pattern = r"<thought>(.*?)</thought>"
     thinking_matches = re.findall(think_pattern, text, re.DOTALL)
     cleaned_text = re.sub(think_pattern, "", text, flags=re.DOTALL).strip()
 
-    open_think = text.count("<think>")
-    close_think = text.count("</think>")
+    open_think = text.count("<thought>")
+    close_think = text.count("</thought>")
     is_thinking = open_think > close_think
 
     current_thinking = ""
     if is_thinking:
-        last_think_pos = text.rfind("<think>")
+        last_think_pos = text.rfind("<thought>")
         if last_think_pos != -1:
             current_thinking = text[last_think_pos + 7 :]
 
@@ -129,7 +120,6 @@ def stream_with_thinking(stream: openai.types.Completion) -> Tuple[str, List[str
     content_placeholder = content_container.empty()
 
     for chunk in stream:
-        time.sleep(0.05)  # To avoid rate limit and ensure smooth streaming
         if chunk.choices[0].delta.content is not None:
             full_content += chunk.choices[0].delta.content
 
@@ -193,12 +183,21 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
         with st.chat_message("assistant"):
             stream = client.chat.completions.create(
                 model=st.session_state["openai_model"],
-                reasoning_effort="default",
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
                 ],
                 stream=True,
+                extra_body={
+                    'extra_body': {
+                        "google": {
+                            "thinking_config": {
+                                "thinking_budget": 20000,
+                                "include_thoughts": True
+                            }
+                        }
+                    }
+                }
             )
 
             full_response, thinking_matches, cleaned_content = stream_with_thinking(stream)
