@@ -1,4 +1,5 @@
 import re
+import time
 import openai
 import streamlit as st
 from typing import List, Tuple
@@ -120,6 +121,7 @@ def stream_with_thinking(stream: openai.types.Completion) -> Tuple[str, List[str
     content_placeholder = content_container.empty()
 
     for chunk in stream:
+        time.sleep(0.5)  # Simulate a delay for streaming effect
         if chunk.choices[0].delta.content is not None:
             full_content += chunk.choices[0].delta.content
 
