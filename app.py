@@ -44,7 +44,7 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
 
         with st.chat_message("assistant"):
             stream = client.invoke(
-                model=Config.LLM.model,
+                model=Config.model,
                 messages=st.session_state.messages,
                 extra_body={
                     'extra_body': {

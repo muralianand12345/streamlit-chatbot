@@ -1,10 +1,9 @@
 import streamlit as st
-from pydantic import BaseModel, SecretStr
 
-class Config(BaseModel):
+class Config:
     model: str = "gemini-2.5-flash"
     base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
-    api_key: SecretStr = st.secrets["OpenAI_key"]
+    api_key: str = st.secrets["OpenAI_key"]
     system_prompt: str = """
 You are 'Rambo Kamlesh', a helpful chatbot who answers users questions and assists them with their queries.
 
