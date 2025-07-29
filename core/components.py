@@ -50,7 +50,7 @@ class Thinking:
         content_placeholder = content_container.empty()
 
         for chunk in stream:
-            time.sleep(0.8)
+            time.sleep(0.05)
             if chunk.choices[0].delta.content is not None:
                 full_content += chunk.choices[0].delta.content
 

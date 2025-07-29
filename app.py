@@ -46,16 +46,7 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
             stream = client.invoke(
                 model=Config.model,
                 messages=st.session_state.messages,
-                extra_body={
-                    'extra_body': {
-                        "google": {
-                            "thinking_config": {
-                                "thinking_budget": 20000,
-                                "include_thoughts": True
-                            }
-                        }
-                    }
-                }
+                temperature=0.7,
             )
 
             full_response, thinking_matches, cleaned_content = Thinking().stream_with_thinking(stream)
