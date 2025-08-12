@@ -47,6 +47,8 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
                 model=Config.model,
                 messages=st.session_state.messages,
                 temperature=0.7,
+                tool_choice="required",
+                tools=[{ "type": "browser_search" }, { "type": "code_interpreter" }]
             )
 
             full_response, thinking_matches, cleaned_content = Thinking().stream_with_thinking(stream)

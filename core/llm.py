@@ -18,7 +18,7 @@ class LLM:
             model=model,
             messages=[{"role": msg.role, "content": msg.content} for msg in messages],
             stream=True,
-            reasoning_effort="high",
+            reasoning_effort="medium",
             **kwargs
         )
 

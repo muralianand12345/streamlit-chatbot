@@ -32,7 +32,7 @@ class Thinking:
         content_placeholder = content_container.empty()
 
         for chunk in stream:
-            time.sleep(0.05)
+            time.sleep(0.03)
             
             if hasattr(chunk.choices[0].delta, 'reasoning') and chunk.choices[0].delta.reasoning is not None:
                 full_reasoning += chunk.choices[0].delta.reasoning
