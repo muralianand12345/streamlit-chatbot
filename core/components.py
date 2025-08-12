@@ -1,12 +1,11 @@
 import time
 import openai
 import streamlit as st
-from typing import Tuple
 from .message import Message
 from openai.types import chat
 
 class Thinking:
-    def stream_with_thinking(self, stream: openai.Stream[chat.ChatCompletionChunk]) -> Tuple[Message, str, str]:
+    def thinking_message(self, stream: openai.Stream[chat.ChatCompletionChunk]) -> Message:
         full_content = ""
         full_reasoning = ""
         
@@ -39,10 +38,9 @@ class Thinking:
         if full_content.strip():
             content_placeholder.markdown(full_content)
 
-        message = Message.from_openai_message({'role': 'assistant', 'content': full_content}, reasoning=full_reasoning if full_reasoning else None)
-        return message, full_content, full_reasoning
+        return Message.from_openai_message({'role': 'assistant', 'content': full_content}, reasoning=full_reasoning if full_reasoning else None)
 
-    def display_message_thinking(self, message: Message, expanded: bool = False) -> None:
+    def display(self, message: Message, expanded: bool = False) -> None:
         if message.has_reasoning():
             with st.expander("Thought Process", expanded=expanded):
                 for i, reasoning in enumerate(message.reasoning):

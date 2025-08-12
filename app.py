@@ -26,7 +26,7 @@ for message in st.session_state.messages:
         
     with st.chat_message(message.role):
         if message.role == "assistant" and message.has_reasoning():
-            thinking.display_message_thinking(message, expanded=False)
+            thinking.display(message, expanded=False)
         st.markdown(message.get_clean_content())
 
 if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
@@ -68,8 +68,8 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
                 tools=[{"type": "browser_search"}, {"type": "code_interpreter"}] if st.session_state.chat_model.startswith("openai/gpt-oss-") else []
             )
 
-            assistant_message, full_response, full_reasoning = thinking.stream_with_thinking(stream)
-            st.session_state.messages.append(assistant_message)
+            message = thinking.thinking_message(stream)
+            st.session_state.messages.append(message)
 
 with st.sidebar:
     def export_chat_history() -> list:
