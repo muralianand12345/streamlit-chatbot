@@ -54,19 +54,6 @@ class Message(BaseModel):
     @classmethod
     def from_openai_message(cls, message: Dict[str, Any], reasoning: Optional[str] = None) -> 'Message':
         return cls(role=message.get('role', 'assistant'), content=message.get('content', ''), reasoning=[reasoning] if reasoning else None, reasoning_source=ReasoningSource.SEPARATE_FIELD if reasoning else None)
-
-    @classmethod
-    def from_generic_message(cls, role: str, content: str, **kwargs) -> 'Message':
-        return cls(role=role, content=content, **kwargs)
-    
-    def add_reasoning(self, reasoning: Union[str, List[str]], source: ReasoningSource = ReasoningSource.MANUAL) -> None:
-        if isinstance(reasoning, str):
-            reasoning = [reasoning]
-        if self.reasoning is None:
-            self.reasoning = reasoning
-        else:
-            self.reasoning.extend(reasoning)
-        self.reasoning_source = source
     
     def get_clean_content(self) -> str:
         if isinstance(self.content, dict):

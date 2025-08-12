@@ -24,23 +24,3 @@ class LLM:
         )
 
         return streams
-    
-    def invoke_sync(self, model: str, messages: Union[List[Message], List[Dict[str, Any]]], include_reasoning_in_content: bool = False, **kwargs: Any) -> Message:
-        if messages and isinstance(messages[0], Message):
-            if include_reasoning_in_content:
-                api_messages = [msg.to_dict(include_reasoning=True) for msg in messages]
-            else:
-                api_messages = [msg.to_openai_format() for msg in messages]
-        else:
-            api_messages = messages
-
-        response = self.client.chat.completions.create(
-            model=model,
-            messages=api_messages,
-            **kwargs
-        )
-        
-        content = response.choices[0].message.content or ""
-        reasoning = getattr(response.choices[0].message, 'reasoning', None)
-
-        return Message.from_openai_message({'role': 'assistant', 'content': content}, reasoning=reasoning)
