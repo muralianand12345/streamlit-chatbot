@@ -26,7 +26,7 @@ for message in st.session_state.messages:
         
     with st.chat_message(message.role):
         if message.role == "assistant" and message.has_reasoning():
-            thinking.display(message, expanded=False)
+            thinking.display_message(message, expanded=False)
         st.markdown(message.get_clean_content())
 
 if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):

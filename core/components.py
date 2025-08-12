@@ -40,7 +40,7 @@ class Thinking:
 
         return Message.from_openai_message({'role': 'assistant', 'content': full_content}, reasoning=full_reasoning if full_reasoning else None)
 
-    def display(self, message: Message, expanded: bool = False) -> None:
+    def display_message(self, message: Message, expanded: bool = False) -> None:
         if message.has_reasoning():
             with st.expander("Thought Process", expanded=expanded):
                 for i, reasoning in enumerate(message.reasoning):
