@@ -1,7 +1,7 @@
 import streamlit as st
 
 class Config:
-    model: str = "openai/gpt-oss-120b"
+    model: str = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"] #"qwen/qwen3-32b", "deepseek-r1-distill-llama-70b"
     base_url: str = "https://api.groq.com/openai/v1"
     api_key: str = st.secrets["OpenAI_key"]
     system_prompt: str = """
@@ -24,4 +24,3 @@ Guidelines:
 	- Break down complex information into clear steps or bullet points.
 	- Keep it helpful, friendly, and professional.
 """
-    thinking_tag: str = "think"

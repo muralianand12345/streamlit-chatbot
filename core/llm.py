@@ -20,7 +20,6 @@ class LLM:
             model=model,
             messages=api_messages,
             stream=True,
-            reasoning_effort="medium",
             **kwargs
         )
 
@@ -38,7 +37,6 @@ class LLM:
         response = self.client.chat.completions.create(
             model=model,
             messages=api_messages,
-            reasoning_effort="medium",
             **kwargs
         )
         

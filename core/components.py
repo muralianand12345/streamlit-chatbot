@@ -5,10 +5,7 @@ from openai.types import chat
 from typing import List, Tuple, Optional
 from .message import Message, ReasoningSource
 
-class Thinking:
-    def __init__(self, thinking_tag: str = "think"):
-        self.thinking_tag = thinking_tag
-        
+class Thinking:        
     def _display_thinking(self, reasoning_steps: List[str], current_thinking: str = "", is_thinking: bool = False) -> None:
         if reasoning_steps or current_thinking or is_thinking:
             with st.expander("Thinking...", expanded=True):
