@@ -12,7 +12,7 @@ with col2:
     st.subheader(f"Powered by :red[Groq]", divider=True)
 
 if "messages" not in st.session_state:
-    system_message = Message(role="system", content=Config.system_prompt, reasoning_source=None)
+    system_message = Message(role="system", content=Config.system_prompt)
     st.session_state.messages = [system_message]
 if "chat_model" not in st.session_state:
     st.session_state.chat_model = Config.model[0]
@@ -50,22 +50,15 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        reasoning_effort = None
-        if st.session_state.chat_model.startswith("openai/gpt-oss-"):
-            reasoning_effort = "medium"
-        elif st.session_state.chat_model == "qwen/qwen3-32b":
-            reasoning_effort = "default"
-        else:
-            reasoning_effort = "medium"
-
         with st.chat_message("assistant"):
             api_messages = [msg.to_openai_format() for msg in st.session_state.messages]
             stream = client.invoke(
                 model=st.session_state.chat_model,
                 messages=api_messages,
                 temperature=0.7,
-                tool_choice="required" if st.session_state.chat_model.startswith("openai/gpt-oss-") else "none",
-                tools=[{"type": "browser_search"}, {"type": "code_interpreter"}] if st.session_state.chat_model.startswith("openai/gpt-oss-") else []
+                reasoning_effort="medium",
+                tool_choice="auto",
+                tools=[{"type": "browser_search"}, {"type": "code_interpreter"}]
             )
 
             message = thinking.thinking_message(stream)
@@ -76,7 +69,7 @@ with st.sidebar:
         exported_chats = []
         for msg in st.session_state.messages:
             if msg.role != "system":
-                exported_chats.append({"role": msg.role, "content": msg.get_clean_content(), "reasoning": msg.reasoning, "reasoning_source": msg.reasoning_source.value if msg.reasoning_source else None})
+                exported_chats.append({"role": msg.role, "content": msg.get_clean_content(), "reasoning": msg.reasoning})
         return exported_chats
 
     selected_model = st.selectbox("Choose LLM Model", options=Config.model, index=Config.model.index(st.session_state.chat_model))

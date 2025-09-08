@@ -12,17 +12,12 @@ class Message(BaseModel):
     role: str
     content: Union[str, Dict[str, Any]]
     reasoning: Optional[List[str]] = Field(default=None, description="Extracted reasoning/thinking steps")
-    raw_content: Optional[str] = Field(default=None, description="Original content before reasoning extraction")
-    reasoning_source: Optional[ReasoningSource] = Field(default=None, description="Source of reasoning")
     
     def __init__(self, **data):
         if 'thinking' in data:
             data['reasoning'] = data.pop('thinking')
         
         super().__init__(**data)
-        
-        if self.reasoning is None and isinstance(self.content, str):
-            self._extract_reasoning_from_content()
     
     @field_validator('content')
     @classmethod
@@ -31,29 +26,9 @@ class Message(BaseModel):
             raise ValueError("Content must be either string or dict")
         return v
     
-    def _extract_reasoning_from_content(self) -> None:
-        if not isinstance(self.content, str):
-            return
-        
-        self.raw_content = self.content
-        patterns = [r'<think>(.*?)</think>', r'<thinking>(.*?)</thinking>', r'<reasoning>(.*?)</reasoning>', r'<!-- thinking:(.*?)-->', r'\[THINKING\](.*?)\[/THINKING\]',]
-        extracted_reasoning = []
-        cleaned_content = self.content
-        
-        for pattern in patterns:
-            matches = re.findall(pattern, self.content, re.DOTALL | re.IGNORECASE)
-            if matches:
-                extracted_reasoning.extend([match.strip() for match in matches])
-                cleaned_content = re.sub(pattern, '', cleaned_content, flags=re.DOTALL | re.IGNORECASE)
-        
-        if extracted_reasoning:
-            self.reasoning = extracted_reasoning
-            self.content = cleaned_content.strip()
-            self.reasoning_source = ReasoningSource.CONTENT_TAGS
-    
     @classmethod
     def from_openai_message(cls, message: Dict[str, Any], reasoning: Optional[str] = None) -> 'Message':
-        return cls(role=message.get('role', 'assistant'), content=message.get('content', ''), reasoning=[reasoning] if reasoning else None, reasoning_source=ReasoningSource.SEPARATE_FIELD if reasoning else None)
+        return cls(role=message.get('role', 'assistant'), content=message.get('content', ''), reasoning=[reasoning] if reasoning else None)
     
     def get_clean_content(self) -> str:
         if isinstance(self.content, dict):

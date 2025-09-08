@@ -47,5 +47,3 @@ class Thinking:
                     st.markdown(reasoning.strip())
                     if i < len(message.reasoning) - 1:
                         st.divider()
-                if message.reasoning_source:
-                    st.caption(f"*Reasoning source: {message.reasoning_source.value}*")
