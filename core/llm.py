@@ -7,12 +7,9 @@ class LLM:
     def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None, **kwargs: Any) -> None:
         self.client = openai.OpenAI(base_url=base_url, api_key=api_key, **kwargs)
 
-    def invoke(self, model: str, messages: Union[List[Message], List[Dict[str, Any]]], include_reasoning_in_content: bool = False, **kwargs: Any) -> openai.Stream[chat.ChatCompletionChunk]:
+    def invoke(self, model: str, messages: Union[List[Message], List[Dict[str, Any]]], **kwargs: Any) -> openai.Stream[chat.ChatCompletionChunk]:
         if messages and isinstance(messages[0], Message):
-            if include_reasoning_in_content:
-                api_messages = [msg.to_dict(include_reasoning=True) for msg in messages]
-            else:
-                api_messages = [msg.to_openai_format() for msg in messages]
+            api_messages = [msg.to_openai_format() for msg in messages]
         else:
             api_messages = messages
 

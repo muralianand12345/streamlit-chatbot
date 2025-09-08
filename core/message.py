@@ -1,12 +1,5 @@
-import re
-from enum import Enum
 from typing import Union, Optional, List, Dict, Any
 from pydantic import BaseModel, Field, field_validator
-
-class ReasoningSource(Enum):
-    CONTENT_TAGS = "content_tags"
-    SEPARATE_FIELD = "separate_field"
-    MANUAL = "manual"
 
 class Message(BaseModel):
     role: str
@@ -35,19 +28,8 @@ class Message(BaseModel):
             return str(self.content)
         return self.content
     
-    def get_full_content(self) -> str:
-        content = self.get_clean_content()
-        if self.reasoning:
-            reasoning_text = '\n'.join(f"<think>{r}</think>" for r in self.reasoning)
-            content = f"{reasoning_text}\n{content}"
-        return content
-    
     def has_reasoning(self) -> bool:
         return self.reasoning is not None and len(self.reasoning) > 0
-    
-    def to_dict(self, include_reasoning: bool = False) -> Dict[str, Any]:
-        result = {'role': self.role, 'content': self.get_full_content() if include_reasoning else self.get_clean_content()}
-        return result
     
     def to_openai_format(self) -> Dict[str, Any]:
         return {'role': self.role, 'content': self.get_clean_content()}
