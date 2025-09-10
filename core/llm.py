@@ -1,6 +1,6 @@
 import openai
 from openai.types import chat
-from typing import Union, Optional, Any, List, Dict
+from typing import Union, Optional, Any, List, Dict, Literal
 from .message import Message
 
 class LLM:
@@ -21,3 +21,14 @@ class LLM:
         )
 
         return streams
+
+    def audio(self, text: str, model: str = "playai-tts", voice: str = "Fritz-PlayAI", response_format: Literal['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'] = "wav", **kwargs: Any) -> bytes:
+        response = self.client.audio.speech.create(
+            model=model,
+            voice=voice,
+            input=text,
+            response_format=response_format,
+            **kwargs
+        )
+
+        return response.content

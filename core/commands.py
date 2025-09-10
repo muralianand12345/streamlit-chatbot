@@ -3,13 +3,16 @@ from typing import Any
 from config import Config
 from core.llm import Message
 
-class Commands:
+class Commands:    
     COMMAND = {
         "clear-chat": "Clear's the chat history.",
         "new-chat": "Starts a new conversation.",
         "help": "Provides a list of available commands.",
         "features": "Lists the features of the chatbot."
     }
+
+    def __init__(self, prefix: str = "/"):
+        self.prefix = prefix
 
     def _commands(self, command: str, *args: Any) -> str:
         messages = [Message(role="system", content=Config.system_prompt)]
@@ -33,8 +36,7 @@ class Commands:
 
 
     def execute(self, message: str) -> str:
-        if not message.startswith("/"):
+        if not message.startswith(self.prefix):
             return message
-        
-        command, *args = message[1:].split()
+        command, *args = message[len(self.prefix):].split()
         return self._commands(command, *args)

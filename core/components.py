@@ -1,8 +1,10 @@
 import time
 import openai
 import streamlit as st
-from .message import Message
 from openai.types import chat
+from typing import Any, Literal
+from .llm import LLM
+from .message import Message
 
 class Thinking:
     def thinking_message(self, stream: openai.Stream[chat.ChatCompletionChunk]) -> Message:
@@ -47,3 +49,13 @@ class Thinking:
                     st.markdown(reasoning.strip())
                     if i < len(message.reasoning) - 1:
                         st.divider()
+
+
+def play_audio(enable: bool, client: LLM, text: str, model: str = "playai-tts", voice: str = "Fritz-PlayAI", response_format: Literal['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'] = "wav", **kwargs: Any) -> None:
+    try:
+        if enable:
+            st.audio(client.audio(text=text, model=model, voice=voice, response_format=response_format, **kwargs), format=f'audio/{response_format}', autoplay=True)
+    except openai.RateLimitError:
+        st.toast('Rate limit exceeded. Please try again later.', icon="⚠️")
+    except Exception:
+        st.toast('Unable to generate audio', icon="⚠️")

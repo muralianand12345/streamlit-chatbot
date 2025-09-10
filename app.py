@@ -1,6 +1,6 @@
 import streamlit as st
 from config import Config
-from core import LLM, Message, Thinking, Commands
+from core import LLM, Message, Thinking, Commands, play_audio
 
 st.set_page_config(initial_sidebar_state="collapsed")
 
@@ -16,18 +16,27 @@ if "messages" not in st.session_state:
     st.session_state.messages = [system_message]
 if "chat_model" not in st.session_state:
     st.session_state.chat_model = Config.model[0]
+if "enable_tts" not in st.session_state:
+    st.session_state.enable_tts = False
 
 client = LLM(base_url=Config.base_url, api_key=Config.api_key)
 thinking = Thinking()
 
-for message in st.session_state.messages:
+for idx, message in enumerate(st.session_state.messages):
     if message.role == "system":
         continue
         
     with st.chat_message(message.role):
         if message.role == "assistant" and message.has_reasoning():
             thinking.display_message(message, expanded=False)
-        st.markdown(message.get_clean_content())
+        if message.role == "assistant":
+            msg_col, btn_col = st.columns([0.90, 0.10])
+            with msg_col:
+                st.markdown(message.get_clean_content())
+            with btn_col:
+                play_audio(enable=False, client=client, text=message.get_clean_content())
+        else:
+            st.markdown(message.get_clean_content())
 
 if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
     if prompt.startswith("/"):
@@ -42,27 +51,43 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
             assistant_message = Message(role="assistant", content=command_response)
             st.session_state.messages.append(assistant_message)
             with st.chat_message("assistant"):
-                st.markdown(command_response)
-    
+                msg_col, btn_col = st.columns([0.90, 0.10])
+                with msg_col:
+                    st.markdown(command_response)
+                with btn_col:
+                    play_audio(enable=False, client=client, text=command_response)
+
     else:
         user_message = Message(role="user", content=prompt)
         st.session_state.messages.append(user_message)
+
         with st.chat_message("user"):
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            api_messages = [msg.to_openai_format() for msg in st.session_state.messages]
-            stream = client.invoke(
-                model=st.session_state.chat_model,
-                messages=api_messages,
-                temperature=0.7,
-                reasoning_effort="medium",
-                tool_choice="auto",
-                tools=[{"type": "browser_search"}, {"type": "code_interpreter"}]
-            )
+            try:
+                api_messages = [msg.to_openai_format() for msg in st.session_state.messages]
+                stream = client.invoke(
+                    model=st.session_state.chat_model,
+                    messages=api_messages,
+                    temperature=0.7,
+                    reasoning_effort="medium",
+                    tool_choice="auto",
+                    tools=[{"type": "browser_search"}, {"type": "code_interpreter"}]
+                )
 
-            message = thinking.thinking_message(stream)
+                message = thinking.thinking_message(stream)
+            except Exception as e:
+                st.error(f"Error: {e}")
+                st.toast('Failed to generate response. Try again later.', icon="⚠️")
+
             st.session_state.messages.append(message)
+
+            msg_col, btn_col = st.columns([0.90, 0.10])
+            with msg_col:
+                pass
+            with btn_col:
+                play_audio(enable=st.session_state.enable_tts, client=client, text=message.get_clean_content())
 
 with st.sidebar:
     def export_chat_history() -> list:
@@ -71,10 +96,17 @@ with st.sidebar:
             if msg.role != "system":
                 exported_chats.append({"role": msg.role, "content": msg.get_clean_content(), "reasoning": msg.reasoning})
         return exported_chats
-
+    
+    def enable_tts() -> None:
+        st.session_state.messages = [st.session_state.messages[0]]
+        st.session_state.enable_tts = True
+        st.rerun()
+        
     selected_model = st.selectbox("Choose LLM Model", options=Config.model, index=Config.model.index(st.session_state.chat_model))
     if selected_model != st.session_state.chat_model:
         st.session_state.chat_model = selected_model
         st.rerun()
+
+    st.checkbox("Text-to-Speech", value=st.session_state.enable_tts, on_change=enable_tts)
 
     st.download_button("Export Chat History", data=str(export_chat_history()), file_name="chat_history.json", mime="application/json")
