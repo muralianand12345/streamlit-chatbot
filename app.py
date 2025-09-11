@@ -16,8 +16,10 @@ if "messages" not in st.session_state:
     st.session_state.messages = [system_message]
 if "chat_model" not in st.session_state:
     st.session_state.chat_model = Config.model[0]
-if "enable_tts" not in st.session_state:
-    st.session_state.enable_tts = False
+if "tts_model" not in st.session_state:
+    st.session_state.tts_model = Config.tts_model[0]
+if "tts_voice" not in st.session_state:
+    st.session_state.tts_voice = Config.tts_voice[0]
 
 client = LLM(base_url=Config.base_url, api_key=Config.api_key)
 thinking = Thinking()
@@ -34,7 +36,13 @@ for idx, message in enumerate(st.session_state.messages):
             with msg_col:
                 st.markdown(message.get_clean_content())
             with btn_col:
-                play_audio(enable=False, client=client, text=message.get_clean_content())
+                play_audio(
+                    enable=st.session_state.tts_model is not None,
+                    client=client,
+                    text=message.get_clean_content(),
+                    model=st.session_state.tts_model,
+                    voice=st.session_state.tts_voice
+                )
         else:
             st.markdown(message.get_clean_content())
 
@@ -55,7 +63,13 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
                 with msg_col:
                     st.markdown(command_response)
                 with btn_col:
-                    play_audio(enable=False, client=client, text=command_response)
+                    play_audio(
+                        enable=st.session_state.tts_model is not None,
+                        client=client,
+                        text=command_response,
+                        model=st.session_state.tts_model,
+                        voice=st.session_state.tts_voice
+                    )
 
     else:
         user_message = Message(role="user", content=prompt)
@@ -87,7 +101,13 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
             with msg_col:
                 pass
             with btn_col:
-                play_audio(enable=st.session_state.enable_tts, client=client, text=message.get_clean_content())
+                play_audio(
+                    enable=st.session_state.tts_model is not None,
+                    client=client,
+                    text=message.get_clean_content(),
+                    model=st.session_state.tts_model,
+                    voice=st.session_state.tts_voice
+                )
 
 with st.sidebar:
     def export_chat_history() -> list:
@@ -96,17 +116,23 @@ with st.sidebar:
             if msg.role != "system":
                 exported_chats.append({"role": msg.role, "content": msg.get_clean_content(), "reasoning": msg.reasoning})
         return exported_chats
-    
-    def enable_tts() -> None:
-        st.session_state.messages = [st.session_state.messages[0]]
-        st.session_state.enable_tts = True
-        st.rerun()
         
     selected_model = st.selectbox("Choose LLM Model", options=Config.model, index=Config.model.index(st.session_state.chat_model))
     if selected_model != st.session_state.chat_model:
         st.session_state.chat_model = selected_model
         st.rerun()
 
-    st.checkbox("Text-to-Speech", value=st.session_state.enable_tts, on_change=enable_tts)
+    selected_tts_model = st.selectbox("Choose TTS Model", options=Config.tts_model, index=Config.tts_model.index(st.session_state.tts_model) if st.session_state.tts_model in Config.tts_model else 0)
+    if selected_tts_model != st.session_state.tts_model:
+        st.session_state.tts_model = selected_tts_model
+        if selected_tts_model is None:
+            st.session_state.tts_voice = Config.tts_voice[0]
+        st.rerun()
+
+    tts_voice_disabled = selected_tts_model is None
+    selected_tts_voice = st.selectbox("Choose TTS Voice", options=Config.tts_voice, index=Config.tts_voice.index(st.session_state.tts_voice) if st.session_state.tts_voice in Config.tts_voice else 0, disabled=tts_voice_disabled)
+    if not tts_voice_disabled and selected_tts_voice != st.session_state.tts_voice:
+        st.session_state.tts_voice = selected_tts_voice
+        st.rerun()
 
     st.download_button("Export Chat History", data=str(export_chat_history()), file_name="chat_history.json", mime="application/json")

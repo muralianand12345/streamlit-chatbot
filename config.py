@@ -1,11 +1,14 @@
 import streamlit as st
+from typing import List, Union
 
 class Config:
-    model: str = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"]
+    model: List[str] = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"]
+    tts_model: List[Union[str, None]] = [None, "playai-tts"]
+    tts_voice: List[str] = ["Arista-PlayAI", "Atlas-PlayAI", "Basil-PlayAI", "Briggs-PlayAI", "Calum-PlayAI", "Celeste-PlayAI", "Cheyenne-PlayAI", "Chip-PlayAI", "Cillian-PlayAI", "Deedee-PlayAI", "Fritz-PlayAI", "Gail-PlayAI", "Indigo-PlayAI", "Mamaw-PlayAI", "Mason-PlayAI", "Mikail-PlayAI", "Mitch-PlayAI", "Quinn-PlayAI", "Thunder-PlayAI"]
     base_url: str = "https://api.groq.com/openai/v1"
     api_key: str = st.secrets["OpenAI_key"]
     system_prompt: str = """
-You are Gaz, a friendly and helpful chatbot that answers questions and assists users with their queries.
+You are a friendly and helpful chatbot that answers questions and assists users with their queries.
 
 Guidelines:
 1. Language & Tone:
