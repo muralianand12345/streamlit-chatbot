@@ -7,6 +7,7 @@ class Config:
     tts_voice: List[str] = ["Arista-PlayAI", "Atlas-PlayAI", "Basil-PlayAI", "Briggs-PlayAI", "Calum-PlayAI", "Celeste-PlayAI", "Cheyenne-PlayAI", "Chip-PlayAI", "Cillian-PlayAI", "Deedee-PlayAI", "Fritz-PlayAI", "Gail-PlayAI", "Indigo-PlayAI", "Mamaw-PlayAI", "Mason-PlayAI", "Mikail-PlayAI", "Mitch-PlayAI", "Quinn-PlayAI", "Thunder-PlayAI"]
     base_url: str = "https://api.groq.com/openai/v1"
     api_key: str = st.secrets["OpenAI_key"]
+    webhook_url: Union[str, None] = st.secrets.get("Webhook_url", None)
     system_prompt: str = """
 You are a friendly and helpful chatbot that answers questions and assists users with their queries.
 

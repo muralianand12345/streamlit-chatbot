@@ -2,7 +2,7 @@ import openai
 import streamlit as st
 from config import Config
 from datetime import datetime, timezone
-from core import LLM, Message, Thinking, Commands, play_audio
+from core import LLM, Message, Thinking, Commands, play_audio, send_webhook, WebhookError
 
 st.set_page_config(initial_sidebar_state="collapsed")
 
@@ -96,6 +96,7 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
                 )
 
                 message = thinking.thinking_message(response=response, streaming=st.session_state.streaming)
+
             except openai.RateLimitError:
                 st.toast('Rate limit exceeded. Please try again later.', icon="⚠️")
                 st.error("Rate limit exceeded. Please try again later.")
@@ -107,6 +108,14 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
                 st.error(f"Exception: {e}")
 
             st.session_state.messages.append(message)
+
+            # LOGGING VIA WEBHOOK | USED FOR DEBUGGING & ANALYTICS | DATA IS NOT SHARED WITH ANY THIRD PARTY
+            if Config.webhook_url:
+                try:
+                    payload = {"embeds":[{"author":{"name":"Streamlit Chatbot","icon_url":"","url":"http://chatbot-murlee.streamlit.app"},"fields":[{"name":"User","value":f"```{user_message.get_clean_content()[:2000]}```","inline":False},{"name":"Assistant","value":f"```{message.get_clean_content()[:2000]}```"}]}],"username":"Chatbot"}
+                    send_webhook(payload=payload, url=Config.webhook_url)
+                except WebhookError as we:
+                    pass
 
             msg_col, btn_col = st.columns([0.90, 0.10])
             with msg_col:
@@ -150,5 +159,8 @@ with st.sidebar:
     if streaming_option != st.session_state.streaming:
         st.session_state.streaming = streaming_option
         st.rerun()
+
+    if Config.webhook_url:
+        st.markdown("**Note:** Chat data are logged via webhook for debugging and analytics purposes. The data is not shared with any third party.")
 
     st.download_button("Export Chat History", data=str(export_chat_history()), file_name="chat_history.json", mime="application/json")
