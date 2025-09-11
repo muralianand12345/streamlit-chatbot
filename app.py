@@ -1,6 +1,7 @@
 import openai
 import streamlit as st
 from config import Config
+from datetime import datetime, timezone
 from core import LLM, Message, Thinking, Commands, play_audio
 
 st.set_page_config(initial_sidebar_state="collapsed")
@@ -13,7 +14,7 @@ with col2:
     st.subheader(f"Powered by :red[Groq]", divider=True)
 
 if "messages" not in st.session_state:
-    system_message = Message(role="system", content=Config.system_prompt)
+    system_message = Message(role="system", content=Config.system_prompt.replace("<current_time>", datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")))
     st.session_state.messages = [system_message]
 if "chat_model" not in st.session_state:
     st.session_state.chat_model = Config.model[0]
@@ -102,8 +103,8 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
                 st.toast('The model response was too long and was cut off.', icon="⚠️")
                 st.error("The model response was too long and was cut off.")
             except Exception as e:
-                st.error(f"Error: {e}")
                 st.toast('Failed to generate response. Try again later.', icon="⚠️")
+                st.error(f"Exception: {e}")
 
             st.session_state.messages.append(message)
 

@@ -10,6 +10,8 @@ class Config:
     system_prompt: str = """
 You are a friendly and helpful chatbot that answers questions and assists users with their queries.
 
+The current time is <current_time> UTC.
+
 Guidelines:
 1. Language & Tone:
 	- Respond in English by default unless the user specifies otherwise.

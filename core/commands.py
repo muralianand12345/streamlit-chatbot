@@ -2,6 +2,7 @@ import streamlit as st
 from typing import Any
 from config import Config
 from core.llm import Message
+from datetime import datetime, timezone
 
 class Commands:    
     COMMAND = {
@@ -15,7 +16,7 @@ class Commands:
         self.prefix = prefix
 
     def _commands(self, command: str, *args: Any) -> str:
-        messages = [Message(role="system", content=Config.system_prompt)]
+        messages = [Message(role="system", content=Config.system_prompt.replace("<current_time>", datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")))]
         if command == "clear-chat":
             st.session_state.messages = messages
             st.rerun()
