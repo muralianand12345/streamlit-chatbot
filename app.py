@@ -1,3 +1,4 @@
+import openai
 import streamlit as st
 from config import Config
 from core import LLM, Message, Thinking, Commands, play_audio
@@ -91,6 +92,12 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
                 )
 
                 message = thinking.thinking_message(stream)
+            except openai.RateLimitError:
+                st.toast('Rate limit exceeded. Please try again later.', icon="⚠️")
+                st.error("Rate limit exceeded. Please try again later.")
+            except openai.LengthFinishReasonError:
+                st.toast('The model response was too long and was cut off.', icon="⚠️")
+                st.error("The model response was too long and was cut off.")
             except Exception as e:
                 st.error(f"Error: {e}")
                 st.toast('Failed to generate response. Try again later.', icon="⚠️")
@@ -117,7 +124,7 @@ with st.sidebar:
                 exported_chats.append({"role": msg.role, "content": msg.get_clean_content(), "reasoning": msg.reasoning})
         return exported_chats
         
-    selected_model = st.selectbox("Choose LLM Model", options=Config.model, index=Config.model.index(st.session_state.chat_model))
+    selected_model = st.selectbox("Choose LLM", options=Config.model, index=Config.model.index(st.session_state.chat_model))
     if selected_model != st.session_state.chat_model:
         st.session_state.chat_model = selected_model
         st.rerun()
