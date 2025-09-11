@@ -8,7 +8,7 @@ col1, col2 = st.columns([1, 3])
 with col1:
     st.image("assets/image.png", width=150)
 with col2:
-    st.title("Chat:blue[BOT] with Reasoning")
+    st.title("Reasoning Chat:blue[BOT]")
     st.subheader(f"Powered by :red[Groq]", divider=True)
 
 if "messages" not in st.session_state:
