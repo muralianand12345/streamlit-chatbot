@@ -21,6 +21,8 @@ if "tts_model" not in st.session_state:
     st.session_state.tts_model = Config.tts_model[0]
 if "tts_voice" not in st.session_state:
     st.session_state.tts_voice = Config.tts_voice[0]
+if "streaming" not in st.session_state:
+    st.session_state.streaming = True
 
 client = LLM(base_url=Config.base_url, api_key=Config.api_key)
 thinking = Thinking()
@@ -82,16 +84,17 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
         with st.chat_message("assistant"):
             try:
                 api_messages = [msg.to_openai_format() for msg in st.session_state.messages]
-                stream = client.invoke(
+                response = client.invoke(
                     model=st.session_state.chat_model,
                     messages=api_messages,
+                    stream=st.session_state.streaming,
                     temperature=0.7,
-                    reasoning_effort="medium",
+                    reasoning_effort="low",
                     tool_choice="auto",
                     tools=[{"type": "browser_search"}, {"type": "code_interpreter"}]
                 )
 
-                message = thinking.thinking_message(stream)
+                message = thinking.thinking_message(response=response, streaming=st.session_state.streaming)
             except openai.RateLimitError:
                 st.toast('Rate limit exceeded. Please try again later.', icon="⚠️")
                 st.error("Rate limit exceeded. Please try again later.")
@@ -140,6 +143,11 @@ with st.sidebar:
     selected_tts_voice = st.selectbox("Choose TTS Voice", options=Config.tts_voice, index=Config.tts_voice.index(st.session_state.tts_voice) if st.session_state.tts_voice in Config.tts_voice else 0, disabled=tts_voice_disabled)
     if not tts_voice_disabled and selected_tts_voice != st.session_state.tts_voice:
         st.session_state.tts_voice = selected_tts_voice
+        st.rerun()
+
+    streaming_option = st.checkbox("Streaming", value=st.session_state.streaming)
+    if streaming_option != st.session_state.streaming:
+        st.session_state.streaming = streaming_option
         st.rerun()
 
     st.download_button("Export Chat History", data=str(export_chat_history()), file_name="chat_history.json", mime="application/json")
