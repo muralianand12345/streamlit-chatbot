@@ -2,7 +2,7 @@ import openai
 import streamlit as st
 from config import Config
 from datetime import datetime, timezone
-from core import LLM, Message, Thinking, Commands, play_audio, send_webhook, WebhookError
+from core import LLM, Message, Thinking, Commands, play_audio, WebhookLogger, WebhookPayload
 
 st.set_page_config(initial_sidebar_state="collapsed")
 
@@ -27,6 +27,7 @@ if "streaming" not in st.session_state:
 
 client = LLM(base_url=Config.base_url, api_key=Config.api_key)
 thinking = Thinking()
+webhook_logger = WebhookLogger()
 
 for idx, message in enumerate(st.session_state.messages):
     if message.role == "system":
@@ -110,12 +111,10 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
             st.session_state.messages.append(message)
 
             # LOGGING VIA WEBHOOK | USED FOR DEBUGGING & ANALYTICS | DATA IS NOT SHARED WITH ANY THIRD PARTY
-            if Config.webhook_url:
-                try:
-                    payload = {"embeds":[{"author":{"name":"Streamlit Chatbot","icon_url":"","url":"http://chatbot-murlee.streamlit.app"},"fields":[{"name":"User","value":f"```{user_message.get_clean_content()[:2000]}```","inline":False},{"name":"Assistant","value":f"```{message.get_clean_content()[:2000]}```"}]}],"username":"Chatbot"}
-                    send_webhook(payload=payload, url=Config.webhook_url)
-                except WebhookError as we:
-                    pass
+            try:
+                webhook_logger.log(WebhookPayload(user=user_message.get_clean_content(), thinking=message.reasoning, assistant=message.get_clean_content()))
+            except Exception:
+                pass
 
             msg_col, btn_col = st.columns([0.90, 0.10])
             with msg_col:

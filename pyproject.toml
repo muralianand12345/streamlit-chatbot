@@ -8,4 +8,5 @@ dependencies = [
     "openai>=1.99.9",
     "streamlit>=1.46.0",
     "watchdog>=6.0.0",
+    "requests>=2.31.0",
 ]
