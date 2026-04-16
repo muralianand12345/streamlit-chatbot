@@ -91,9 +91,9 @@ if prompt := st.chat_input("What's on your mind? (Type /help for commands)"):
                     messages=api_messages,
                     stream=st.session_state.streaming,
                     temperature=0.7,
-                    reasoning_effort="low",
-                    tool_choice="auto",
-                    tools=[{"type": "browser_search"}, {"type": "code_interpreter"}]
+                    reasoning_effort="high",
+                    # tool_choice="auto",
+                    # tools=[{"type": "browser_search"}, {"type": "code_interpreter"}]
                 )
 
                 message = thinking.thinking_message(response=response, streaming=st.session_state.streaming)
