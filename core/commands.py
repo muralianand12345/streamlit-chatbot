@@ -8,8 +8,7 @@ class Commands:
     COMMAND = {
         "clear-chat": "Clear's the chat history.",
         "new-chat": "Starts a new conversation.",
-        "help": "Provides a list of available commands.",
-        "features": "Lists the features of the chatbot."
+        "help": "Provides a list of available commands."
     }
 
     def __init__(self, prefix: str = "/"):
@@ -30,8 +29,6 @@ class Commands:
             for cmd, desc in self.COMMAND.items():
                 help_text += f"- **/{cmd}**: {desc}\n"
             return help_text.strip()
-        elif command == "features":
-            return "### Features:\n- Chat history\n- Context awareness\n- Reasoning capabilities\n- Browser searching (Advanced Web search)\n- Python code execution"
         else:
             return f"Unknown command: {command}"
 
